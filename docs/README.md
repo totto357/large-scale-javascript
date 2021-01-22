@@ -1,86 +1,115 @@
 # データの流れ
+
 ## 概略図
 
 ![概略図](./img/workflow.png)
 
 ## アプリの初期化フロー
 
-以下は大まかなAppの初期化から表示の更新におけるフローです。
+以下は大まかなアプリの初期化から表示の更新におけるフローです。
 
-1. Initialize domain(ドメインの初期化、Repositoryへの保存、データベースの初期化)
-1. AppContainer(Rootとなるコンポーネント) Mount
-1. 初期表示
-1. Routing(Routerコンポーネントでのルーティング)
-    1. Update State 
-    1. Update View
+1. 必要なものの初期化
+   - ドメインの初期化
+   - Repository への保存
+   - データベース(localStorage やメモリキャッシュ等)の初期化
+2. AppContainer(Root となるコンポーネント) のマウント
+3. 初期描画
+4. ルーティング(Router コンポーネントでのルーティング)
+5. ページコンポーネントの描画
+   1. ステートの更新
+   2. 各コンポーネントの描画
 
-これ以降は、[use-case](./use-case.md)を使い、[domain](./domain.md)や[store](./store.md)を更新する。
-AppContainerはstoreの変更を監視しているため、stateが変更される度にViewを更新するのが基本的な表示の更新フローです。
+これ以降は、[usecase](./usecase.md)を使い、[model](./model.md)や[state](./state.md)を更新する。
+ページコンポーネントは State の変更を監視しているため、State が変更される度に Component を更新するのが基本的な表示の更新フローです。
 
 ## 更新のパターン
-### 永続化するパターン
-View -> UseCase -> Domain -> Repository -> State -> View -> ...
 
-### Stateを直接更新するパターン
-View -> UseCase -> State -> View -> ...
+### State を直接更新するパターン
 
-Stateのみに存在する情報を更新したいときに、`dispatch`による更新を行う。
+いわゆる Flux パターンでの実装です。
+基本的にはこちらの流れでデータを更新していきます。
+
+```
+Component -> (user action) -> UseCase -> (dispatch paylaod) -> State -> Component -> ...
+```
+
+<!-- State のみに存在する情報を更新したいときに、Payload を`dispatch`し更新を行う。 -->
+
+### リポジトリを用いて永続化するパターン
+
+CQRS 的にモデルを永続化するケースもあります。  
+(localStorage やキャッシュを使うパターンなど)
+
+```
+Component -> (user action)-> UseCase -> Model -> Repository -> State -> View -> ...
+```
+
 ## 各クラスの概要
-### View(Component)
-ユーザーアクションやポーリングなどによりUseCaseを生成し実行する。  
-UseCase実行時に必要なデータを渡す。
 
-Component内にも役割の階層があるため、詳細は[Component](./component.md)を参照。
+### Component
+
+ユーザーアクションやポーリングなどにより UseCase を生成し実行する。  
+UseCase 実行時に必要なデータを渡す。
+
+Container Component と Presentation Component の 2 種類がある。  
+詳細は[Component](./component.md)を参照。
 
 ### UseCase
-受け取ったデータを用いて、entityの生成、変更を行い、結果をRepositoryに保存する。  
-もしくは、受け取ったデータを必要に応じて加工し、Stateへ向けたイベントを発する。
 
-### Domain
+受け取ったデータを必要に応じて加工し、イベント(Payload)を発する。  
+もしくは、受け取ったデータを用いて、model の生成、変更を行い、結果を Repository に保存する。
+
+### Model
+
 生成されたり、変更される対象。  
-扱われるデータのひとつなので、Domainが他クラスにデータを渡すことはない。
+扱われるデータのひとつなので、モデルが他クラスにデータを渡すことはない。
 
 ### Repository
+
 永続化周りの処理を担当。  
-データの保存が行われた際に、Stateへ向けたイベントを発する。
+データの保存が行われた際に、State へ向けたイベントを発する。
 
 ### State
+
 生成されたり、変更される対象。  
-Viewを意識したデータを持ち、UseCaseのイベントの処理を行う。
+View を意識したデータを持ち、UseCase のイベントの処理を行う。
 
-### Store
-UseCaseとRepositoryのイベントを監視し、Stateの生成、変更を行う。  
-Stateの更新がある場合は、Viewに向けたイベントを発する。
-
+///////////////////////////////////////////////  
+ここまではおｋ  
+///////////////////////////////////////////////  
 
 # 実装フロー例
 
 ## ボタンを追加したい
+
 ※ この順で実装すべきというものではなく、あくまで参考です。
 
 ### Component の用意
 
-- component/project下にHogeButton.jsを追加する。  
-- component/container下から、HogeButtonを利用したいcontainerを選び、HogeButton利用する。  
+- component/project 下に HogeButton.js を追加する。
+- component/container 下から、HogeButton を利用したい container を選び、HogeButton 利用する。
 
-詳細は [ComponentのREADME](./component.md) を参照してください。
+詳細は [Component の README](./component.md) を参照してください。
 
 ### UseCase の追加や利用
-すでにHogeButtonを利用した際のUseCaseがある場合は、container内でHogeButtonのハンドラを定義し、HogeButtonへ渡す。
-※ project下ではUseCaseに依存させないため、containerでハンドラを定義する。
 
-UseCaseがない場合は新規に作成し、それを利用する。
+すでに HogeButton を利用した際の UseCase がある場合は、container 内で HogeButton のハンドラを定義し、HogeButton へ渡す。
+※ project 下では UseCase に依存させないため、container でハンドラを定義する。
+
+UseCase がない場合は新規に作成し、それを利用する。
 (詳細は [UseCase の README](./use-case.md) を参照してください。)
 
 ### Domain の関数/プロパティの追加や変更
+
 既存の関数で要件が満たせない場合は、関数の追加や変更を行う。  
 また、新規プロパティが必要な場合は追加を行う。
 (詳細は [Domain の README](./domain.md) を参照してください。)
 
 ### State の変更
-Domainの変更を受けてStateのプロパティの変更、getter関数を修正したりする。
+
+Domain の変更を受けて State のプロパティの変更、getter 関数を修正したりする。
 (詳細は [State の README](./store.md) を参照してください。)
 
 ### Component の変更
-Stateの変更により、表示内容に変更がある場合は、propsの追加や処理の変更を行う。
 
+State の変更により、表示内容に変更がある場合は、props の追加や処理の変更を行う。
