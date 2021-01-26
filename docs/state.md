@@ -1,58 +1,77 @@
-# Store
-
-## 役割
-`State` を内包し、その参照を提供する。
-Repositoryの変更イベントに対する処理をもつ。
-UseCaseのイベントをStateにつなぐ。
-
 # State
 
 ## 役割
-Domainの情報を、Componentが利用しやすい形に変換する。
-UseCaseのイベントに対する処理をもつ。
+
+Containerコンポーネントで扱う状態を保持する。  
+Modelの情報を、Componentが利用しやすい形に変換する。  
+UseCaseのイベントに対する処理をもつ。  
 
 ## 原則
 
-- Domainのentityが入れ子になっている場合などは、entityをそのまま利用してもよい。
-- Component用に変換が必要な場合は、単純なオブジェクトや、変換用のクラスを用意してもよい。
+- Modelが入れ子になっている場合などは、そのまま利用してもよい
+- Component用に変換が必要な場合は、単純なオブジェクトや、変換用のクラスを用意してもよい
 
-理由としては、変更がある度に新規インスタンスを返す仕組みとイベント周りのつなぎ込みが複雑になりそうなためと、Domainの情報からStateは作れるはずなため。
+理由としては、変更がある度に新規インスタンスを返す仕組みとイベント周りのつなぎ込みが複雑になりそうなためと、Modelの情報からStateは作れるはずなため。
 
 ## 作り方
-### 命名規則
-```
-名詞(entity 名) + State
-```
-entityと対応している場合はそのentity名が入る。
 
-### ディレクトリの切り方
-Stateの入れ子は作らないため、基本的にはstore/ 直下にentity名でディレクトリを切り、
-その下に`HogeStore.js`、`HogeState.js`を配置する。
-Componentを意識した形になるので、大きくなりすぎず、逆に細かく分けすぎて情報のかぶりがあまりでないようにStateを分ける。
+### 命名規則
+
+```
+名詞(コンテナ名) + State
+```
+
+container コンポーネントと1対1で作成するため、コンテナ名がそのまま入る。
+
+### 配置場所
+
+container コンポーネントの真横に配置する。  
+例：`/containers/Hoge/Page/HogePageState.ts`
 
 ### Component を意識したプロパティの作成
-たとえばComponentのHogeButtonを非表示にしたい場合は次のようにする。
 
-Containerに渡すHogeStateへ`isHidden`のようなプロパティを追加する。
+たとえばComponentのHogeButtonの一部を非表示にしたい場合は次のようにする。
 
-```js
-export default class HogeState {
-    constructor({isHidden}){
-        this.isHidden = isHidden;
+Containerに渡すHogePageStateへ`isHidden`のようなプロパティを追加する。
+
+```ts
+export default class HogePageState {
+    isHidden = false;
+
+    constructor(props: HogePageStateProps){
+        this.isHidden = props.isHidden;
     }
 }
 ```
 
 そして、HogeButtonの親のcontainerで次のようにpropsとして渡す。
 
-```jsx
-<HogeButton hidden={hogeState.isHidden}/>
+```tsx
+<HogeButton hidden={state.isHidden}/>
 ```
 
-HogeButtonComponent内では、hiddenの値を見てrenderの処理を行う。
-特別な理由がない場合は、メソッドを生やしてrender毎に動的に計算するよりかは、constructorで計算したものを定義しておいた方が負荷的に良さそう。
-(stateはStoreGroupによってキャッシュされる)
+HogeButtonComponent内では、hiddenの値を見てrenderの処理を行う。  
+特別な理由がない場合は、メソッドを生やしてrender毎に動的に計算するよりかは、constructorで計算したものを定義しておいた方が負荷的に良さそう。  
+(stateはuseReducerによってキャッシュされる)
 
-### State#equals メソッド
-StoreがUseCaseやRepositoryのイベントによってStateを生成し直した際に、内容に変更がないケースはありうる。
-変更がないことを判断するためにState自身のプロパティと比較するequalsメソッドを用意し、Storeでそれを利用する。
+### UseCase のイベント処理
+
+UseCase から発せられるイベントは `reduce` メソッドで受けることができる。  
+StateはImmutableなクラスとして作成するが、reduceに関してはmutabeなメソッドのように書くことができる。  
+これは基底クラスの `State` で [Immer](https://immerjs.github.io/immer/docs/introduction) を使っているためである。
+
+```ts
+export class HogePageState extends State {
+    hoges: Hoge[] = [];
+
+    reduce(this: State<this>, payload: Payload) {
+        if (payload instanceof FetchedHogePayload) {
+            this.hoge = payload.hoge;
+            return;
+        }
+    }
+}
+```
+
+※ `reduce` 内のif文ではelse if を使ってもよいが、アーリーリターンをしたほうが見やすくなる。  
+※ ネストしたモデルを利用する場合、State が新しくならない場合がある。その場合は、モデルも Immutable な設計にすると良い。

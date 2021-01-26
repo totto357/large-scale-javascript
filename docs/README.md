@@ -19,7 +19,7 @@
    1. ステートの更新
    2. 各コンポーネントの描画
 
-これ以降は、[usecase](./usecase.md)を使い、[model](./model.md)や[state](./state.md)を更新する。
+これ以降は、[UseCase](./usecase.md)を使い、[Model](./model.md)や[State](./state.md)を更新する。
 ページコンポーネントは State の変更を監視しているため、State が変更される度に Component を更新するのが基本的な表示の更新フローです。
 
 ## 更新のパターン
@@ -37,12 +37,14 @@ Component -> (user action) -> UseCase -> (dispatch paylaod) -> State -> Componen
 
 ### リポジトリを用いて永続化するパターン
 
-CQRS 的にモデルを永続化するケースもあります。  
-(localStorage やキャッシュを使うパターンなど)
+CQRS 的にリポジトリを用いて、モデルを永続化するケースもあります。  
+(localStorage やキャッシュを使うパターンなど)  
 
 ```
 Component -> (user action)-> UseCase -> Model -> Repository -> State -> View -> ...
 ```
+
+※ アーキテクチャの参考にしているAlmin.jsではこちらのフローが一般的ですが、ネクストではFluxパターンを基本とします。(一部ではこちらも使っています。)  
 
 ## 各クラスの概要
 
@@ -57,12 +59,12 @@ Container Component と Presentation Component の 2 種類がある。
 ### UseCase
 
 受け取ったデータを必要に応じて加工し、イベント(Payload)を発する。  
-もしくは、受け取ったデータを用いて、model の生成、変更を行い、結果を Repository に保存する。
+もしくは、受け取ったデータを用いて、model の生成、変更を行い、結果を Repository に保存する。  
 
 ### Model
 
 生成されたり、変更される対象。  
-扱われるデータのひとつなので、モデルが他クラスにデータを渡すことはない。
+扱われるデータのひとつなので、モデルが他クラスにデータを渡すことはない。  
 
 ### Repository
 
@@ -74,10 +76,6 @@ Container Component と Presentation Component の 2 種類がある。
 生成されたり、変更される対象。  
 View を意識したデータを持ち、UseCase のイベントの処理を行う。
 
-///////////////////////////////////////////////  
-ここまではおｋ  
-///////////////////////////////////////////////  
-
 # 実装フロー例
 
 ## ボタンを追加したい
@@ -86,29 +84,29 @@ View を意識したデータを持ち、UseCase のイベントの処理を行�
 
 ### Component の用意
 
-- component/project 下に HogeButton.js を追加する。
-- component/container 下から、HogeButton を利用したい container を選び、HogeButton 利用する。
+- components 下に HogeButton/HogeButton.tsx を追加する
+- containers 下から、HogeButton を利用したい container に HogeButton を配置する
 
-詳細は [Component の README](./component.md) を参照してください。
+詳細は [Component](./component.md) を参照してください。
 
 ### UseCase の追加や利用
 
-すでに HogeButton を利用した際の UseCase がある場合は、container 内で HogeButton のハンドラを定義し、HogeButton へ渡す。
-※ project 下では UseCase に依存させないため、container でハンドラを定義する。
+すでに HogeButton を利用した際の UseCase がある場合は、container 内で HogeButton のハンドラを定義し、HogeButton へ渡す。  
+※ components 下では UseCase に依存させないため、container でハンドラを定義する。  
 
-UseCase がない場合は新規に作成し、それを利用する。
-(詳細は [UseCase の README](./use-case.md) を参照してください。)
+UseCase がない場合は新規に作成し、それを利用する。  
+(詳細は [UseCase](./usecase.md) を参照してください。)  
 
 ### Domain の関数/プロパティの追加や変更
 
 既存の関数で要件が満たせない場合は、関数の追加や変更を行う。  
-また、新規プロパティが必要な場合は追加を行う。
-(詳細は [Domain の README](./domain.md) を参照してください。)
+また、新規プロパティが必要な場合は追加を行う。  
+(詳細は [Model](./model.md) を参照してください。)  
 
 ### State の変更
 
-Domain の変更を受けて State のプロパティの変更、getter 関数を修正したりする。
-(詳細は [State の README](./store.md) を参照してください。)
+Model の変更を受けて State のプロパティの変更、getter 関数を修正したりする。  
+(詳細は [State](./store.md) を参照してください。)  
 
 ### Component の変更
 

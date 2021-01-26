@@ -1,7 +1,7 @@
 # UseCase
 
 ## 役割
-ComponentとDomainをつなぐ。
+ComponentとModelをつなぐ。
 
 - 新規にEntityを作成し、Repositoryに保存
 - Repositoryから既存のEntityを取りだす
