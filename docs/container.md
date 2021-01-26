@@ -71,6 +71,8 @@
             /infra
                 /api
                     FileApi.ts
+            /usecases
+                FetchFileListUseCase.ts
         /Filter
             FileListFilter.tsx
             FileListFilterState.ts
@@ -79,6 +81,8 @@
             /infra
                 /api
                     NamelistApi.ts
+        /models
+            File.ts
 ```
 
 ## 作り方

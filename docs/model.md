@@ -4,9 +4,13 @@
 
 モデルは基本的にPlain Old TypeScript Object(POTO)で書く。  
 ライブラリへの依存は必要最低限のものとする。  
-(ImmutableにするためにImmerに依存するのは可)  
 
 InfraのAPIクライアントなどは外から受け取るようにし、ドメインがInfraに依存してはいけない。
+
+現状モデルで依存しているライブラリは以下のもの。
+
+- Immer: Immutableを書きやすくするため
+- ddd-base: DDDにおけるEntityやValueObjectを書きやすくするため
 
 ## 役割
 
